@@ -13,6 +13,12 @@ let connection = null;
 let sendSkeleton = true;
 let floorOffset = 0;
 let flipSkeleton = false;
+let enabledTrackers = {
+    feet: true,
+    waist: true,
+    knees: false,
+    elbows: false
+}
 
 class Vec3{
     constructor(str){
@@ -65,17 +71,17 @@ server.on('connection', ( sock ) => {
     sock.on('message', ( data ) => {
         let msg = JSON.parse(data);
 
-        if(msg.type === 'floorUP'){
+        if(msg.type === 'floorUP')
             floorOffset++;
-        }
         
-        if(msg.type === 'floorDown'){
+        if(msg.type === 'floorDown')
             floorOffset--;
-        }
 
-        if(msg.type === 'flip'){
+        if(msg.type === 'flip')
             flipSkeleton = !flipSkeleton
-        }
+
+        if(msg.type === 'toggleTrackers')
+            enabledTrackers[msg.trackers] = !enabledTrackers[msg.trackers];
     })
 
     sock.on('close', () => {
@@ -128,13 +134,34 @@ http.createServer((req, res) => {
             rShou.set(poses[14]);
             spine.set(poses[15]);
 
-            c.send('/tracking/trackers/1/position', lfoot.x, lfoot.y, lfoot.z);
-            c.send('/tracking/trackers/2/position', rfoot.x, rfoot.y, rfoot.z);
-            c.send('/tracking/trackers/3/position', waist.x, waist.y, waist.z);
+            if(enabledTrackers.feet){
+                c.send('/tracking/trackers/1/position', lfoot.x, lfoot.y, lfoot.z);
+                c.send('/tracking/trackers/2/position', rfoot.x, rfoot.y, rfoot.z);
 
-            c.send('/tracking/trackers/1/rotation', 0, 0, 0);
-            c.send('/tracking/trackers/2/rotation', 0, 0, 0);
-            c.send('/tracking/trackers/3/rotation', 0, 0, 0);
+                c.send('/tracking/trackers/1/rotation', 0, 0, 0);
+                c.send('/tracking/trackers/2/rotation', 0, 0, 0);
+            }
+
+            if(enabledTrackers.waist){
+                c.send('/tracking/trackers/3/position', waist.x, waist.y, waist.z);
+                c.send('/tracking/trackers/3/rotation', 0, 0, 0);
+            }
+
+            if(enabledTrackers.knees){
+                c.send('/tracking/trackers/4/position', lknee.x, lknee.y, lknee.z);
+                c.send('/tracking/trackers/5/position', rknee.x, rknee.y, rknee.z);
+
+                c.send('/tracking/trackers/4/rotation', 0, 0, 0);
+                c.send('/tracking/trackers/5/rotation', 0, 0, 0);
+            }
+
+            if(enabledTrackers.elbows){
+                c.send('/tracking/trackers/6/position', lElbo.x, lElbo.y, lElbo.z);
+                c.send('/tracking/trackers/7/position', rElbo.x, rElbo.y, rElbo.z);
+
+                c.send('/tracking/trackers/6/rotation', 0, 0, 0);
+                c.send('/tracking/trackers/7/rotation', 0, 0, 0);
+            }
     
             if(sendSkeleton && connection){
                 connection.send(JSON.stringify({

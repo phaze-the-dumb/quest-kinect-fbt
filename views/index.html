@@ -57,6 +57,24 @@
                     Flip
                 </div>
             </div>
+
+            <h1>Trackers</h1>
+            <div style="display: flex;">
+                <div class="button" onclick="ws.send(JSON.stringify({ type: 'toggleTrackers', trackers: 'feet' })); floorOffset--;">
+                    Toggle Feet
+                </div>
+                <div class="button" onclick="ws.send(JSON.stringify({ type: 'toggleTrackers', trackers: 'waist' })); floorOffset++;">
+                    Toggle Waist
+                </div>
+            </div>
+            <div style="display: flex;">
+                <div class="button" onclick="ws.send(JSON.stringify({ type: 'toggleTrackers', trackers: 'knees' })); floorOffset--;">
+                    Toggle Knees
+                </div>
+                <div class="button" onclick="ws.send(JSON.stringify({ type: 'toggleTrackers', trackers: 'elbows' })); floorOffset++;">
+                    Toggle Elbows
+                </div>
+            </div>
         </div>
 
         <script src="https://threejs.org/build/three.js"></script>
