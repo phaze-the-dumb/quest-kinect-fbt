@@ -3,7 +3,7 @@ const WebSocket = require('ws');
 const { spawn } = require('child_process');
 const { Client } = require('node-osc');
 
-let c = new Client('127.0.0.1', 9000);
+let c = new Client(process.argv[2], 9000);
 
 spawn('app/SkeletonBasics-WPF.exe');
 
@@ -82,6 +82,9 @@ server.on('connection', ( sock ) => {
 
         if(msg.type === 'toggleTrackers')
             enabledTrackers[msg.trackers] = !enabledTrackers[msg.trackers];
+
+        if(msg.type === 'calibrateForwards')
+            c.send('/tracking/trackers/head/rotation', 0, 0, 0);
     })
 
     sock.on('close', () => {
@@ -133,6 +136,8 @@ http.createServer((req, res) => {
             lShou.set(poses[13]);
             rShou.set(poses[14]);
             spine.set(poses[15]);
+
+            c.send('/tracking/trackers/head/position', heade.x, heade.y, heade.z);
 
             if(enabledTrackers.feet){
                 c.send('/tracking/trackers/1/position', lfoot.x, lfoot.y, lfoot.z);
