@@ -83,8 +83,20 @@ server.on('connection', ( sock ) => {
         if(msg.type === 'toggleTrackers')
             enabledTrackers[msg.trackers] = !enabledTrackers[msg.trackers];
 
-        if(msg.type === 'calibrateForwards')
+        if(msg.type === 'calibrateForwards'){
             c.send('/tracking/trackers/head/rotation', 0, 0, 0);
+
+            c.send('/tracking/trackers/1/rotation', 0, 0, 0);
+            c.send('/tracking/trackers/2/rotation', 0, 0, 0);
+
+            c.send('/tracking/trackers/3/rotation', 0, 0, 0);
+
+            c.send('/tracking/trackers/4/rotation', 0, 0, 0);
+            c.send('/tracking/trackers/5/rotation', 0, 0, 0);
+
+            c.send('/tracking/trackers/6/rotation', 0, 0, 0);
+            c.send('/tracking/trackers/7/rotation', 0, 0, 0);
+        }
     })
 
     sock.on('close', () => {
@@ -110,6 +122,11 @@ let lShou = new Vec3('0,0,0');
 let rShou = new Vec3('0,0,0');
 let spine = new Vec3('0,0,0');
 
+// let lfa = 0;
+// let rfa = 0;
+// let lfb = 0;
+// let rfb = 0;
+
 http.createServer((req, res) => {
     let body = '';
     req.on('data', (chunk) => {
@@ -118,6 +135,7 @@ http.createServer((req, res) => {
 
     req.on('end', () => {
         if(req.url === '/position'){
+            console.log('Update: '+Date.now());
             let poses = body.split('/');
 
             lfoot.set(poses[0]);
@@ -140,32 +158,32 @@ http.createServer((req, res) => {
             c.send('/tracking/trackers/head/position', heade.x, heade.y, heade.z);
 
             if(enabledTrackers.feet){
+                // rotation attempt, didn't work, if you have any ideas please tell me
+                // lfa = lerp(lfa, Math.atan((lknee.x - lfoot.x) / (lknee.y - lfoot.y)) * (180 / Math.PI), 0.5);
+                // rfa = lerp(rfa, Math.atan((rknee.x - rfoot.x) / (rknee.y - rfoot.y)) * (180 / Math.PI), 0.5);
+
+                // let lh = (lknee.y - lfoot.y) / (Math.sin(lfa) * (180 / Math.PI));
+                // let rh = (rknee.y - rfoot.y) / (Math.sin(rfa) * (180 / Math.PI));
+
+                // lfb = lerp(lfb, Math.acos((lknee.z - lfoot.z) / lh) * (180 / Math.PI), 0.5);
+                // rfb = lerp(rfb, Math.acos((rknee.z - rfoot.z) / rh) * (180 / Math.PI), 0.5);
+
                 c.send('/tracking/trackers/1/position', lfoot.x, lfoot.y, lfoot.z);
                 c.send('/tracking/trackers/2/position', rfoot.x, rfoot.y, rfoot.z);
-
-                c.send('/tracking/trackers/1/rotation', 0, 0, 0);
-                c.send('/tracking/trackers/2/rotation', 0, 0, 0);
             }
 
             if(enabledTrackers.waist){
                 c.send('/tracking/trackers/3/position', waist.x, waist.y, waist.z);
-                c.send('/tracking/trackers/3/rotation', 0, 0, 0);
             }
 
             if(enabledTrackers.knees){
                 c.send('/tracking/trackers/4/position', lknee.x, lknee.y, lknee.z);
                 c.send('/tracking/trackers/5/position', rknee.x, rknee.y, rknee.z);
-
-                c.send('/tracking/trackers/4/rotation', 0, 0, 0);
-                c.send('/tracking/trackers/5/rotation', 0, 0, 0);
             }
 
             if(enabledTrackers.elbows){
                 c.send('/tracking/trackers/6/position', lElbo.x, lElbo.y, lElbo.z);
                 c.send('/tracking/trackers/7/position', rElbo.x, rElbo.y, rElbo.z);
-
-                c.send('/tracking/trackers/6/rotation', 0, 0, 0);
-                c.send('/tracking/trackers/7/rotation', 0, 0, 0);
             }
     
             if(sendSkeleton && connection){
@@ -192,5 +210,7 @@ http.createServer((req, res) => {
                 }))
             }
         }
+
+        res.end('200 OK');
     })
 }).listen(9090);
