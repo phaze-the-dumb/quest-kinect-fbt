@@ -1,0 +1,219 @@
+<html>
+    <head>
+        <style>
+            .info{
+                position: fixed;
+                top: 10px;
+                left: 10px;
+                width: 400px;
+                height: 500px;
+                background: #0005;
+                border-radius: 10px;
+                box-shadow: white 0 0 10px;
+                z-index: 100;
+                text-align: center;
+                font-family: 'Courier New', Courier, monospace;
+            }
+
+            .button{
+                background: gray;
+                color: white;
+                border-radius: 10px;
+                margin: 10px;
+                padding: 10px;
+                font-family: 'Courier New', Courier, monospace;
+                cursor: pointer;
+                width: 100%;
+            }
+
+            .bigFuckingText{
+                font-size: 40px;
+                text-align: center;
+                width: 100%;
+                font-family: 'Courier New', Courier, monospace;
+                color: white;
+            }
+
+            h1{
+                color: white;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="info">
+            <h1>Floor</h1>
+            <div style="display: flex;">
+                <div class="button" onclick="ws.send(JSON.stringify({ type: 'floorUP' })); floorOffset--;">
+                    UP
+                </div>
+                <div class="button" onclick="ws.send(JSON.stringify({ type: 'floorDown' })); floorOffset++;">
+                    DOWN
+                </div>
+            </div>
+
+            <h1>Skeleton</h1>
+            <div style="display: flex;">
+                <div class="button" onclick="ws.send(JSON.stringify({ type: 'flip' })); floorOffset++;">
+                    Flip
+                </div>
+            </div>
+        </div>
+
+        <script src="https://threejs.org/build/three.js"></script>
+        <script>
+            let floorOffset = 0;
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+
+            const renderer = new THREE.WebGLRenderer();
+            document.body.appendChild(renderer.domElement);
+
+            const floorGeometry = new THREE.PlaneGeometry(10, 10);
+            const floorMaterial = new THREE.MeshBasicMaterial( {color: 0x444444, side: THREE.DoubleSide} );
+            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            scene.add(floor);
+
+            floor.rotation.x = 90 * (Math.PI / 180)
+            floor.position.y = -1;
+
+            camera.position.z = 5;
+
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            window.onresize = () => {
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+
+            renderer.domElement.style.position = 'fixed';
+            renderer.domElement.style.top = '0';
+            renderer.domElement.style.left = '0';
+
+            let ws = new WebSocket('ws://127.0.0.1:9091');
+
+            ws.onopen = () => console.log('we have connected YEEEEEEEEEEEEEE');
+            ws.onclose = () => console.log('oh no, disconnected :(');
+
+            let mkBall = () => {
+                const geometry = new THREE.SphereGeometry(0.01, 32, 16);
+                const material = new THREE.MeshBasicMaterial( { color: 0xffff00 } );
+                return new THREE.Mesh( geometry, material );
+            }
+
+            const leftFoot = mkBall();
+            const rightFoot = mkBall();
+            const waist = mkBall();
+            const leftKnee = mkBall();
+            const rightKnee = mkBall();
+            const leftElbow = mkBall();
+            const rightElbow = mkBall();
+            const leftHand = mkBall();
+            const rightHand = mkBall();
+            const head = mkBall();
+            const leftHip = mkBall();
+            const rightHip = mkBall();
+            const shoulderCenter = mkBall();
+            const leftShoulder = mkBall();
+            const rightShoulder = mkBall();
+            const spine = mkBall();
+
+            scene.add(leftFoot, rightFoot, waist, leftKnee, rightKnee, leftElbow, rightElbow, leftHand, rightHand, head, leftHip, rightHip, shoulderCenter, leftShoulder, rightShoulder, spine);
+            const lineMaterial = new THREE.LineBasicMaterial( { color: 0x00ccff } );
+
+            let body = {
+                leftFoot: [ 0, 0, 0 ],
+                rightFoot: [ 0, 0, 0 ],
+                waist: [ 0, 0, 0 ],
+                leftKnee: [ 0, 0, 0 ],
+                rightKnee: [ 0, 0, 0 ],
+                leftElbow: [ 0, 0, 0 ],
+                rightElbow: [ 0, 0, 0 ],
+                leftHand: [ 0, 0, 0 ],
+                rightHand: [ 0, 0, 0 ],
+                head: [ 0, 0, 0 ],
+                leftHip: [ 0, 0, 0 ],
+                rightHip: [ 0, 0, 0 ],
+                shoulderCenter: [ 0, 0, 0 ],
+                leftShoulder: [ 0, 0, 0 ],
+                rightShoulder: [ 0, 0, 0 ],
+                spine: [ 0, 0, 0 ]
+            }
+
+            ws.onmessage = ( data ) => {
+                let msg = JSON.parse(data.data);
+
+                if(msg.type === 'skeletonUpdate'){
+                    body = msg.body;
+                }
+            }
+
+            let lines = [];
+            class Line{
+                constructor( point1, point2 ){
+                    this.point1 = point1;
+                    this.point2 = point2;
+
+                    this.geometry = new THREE.BufferGeometry()
+                    this.line = new THREE.Line(this.geometry, lineMaterial);
+
+                    lines.push(this);
+                    scene.add(this.line);
+                }
+                update(){
+                    this.geometry.setFromPoints([ this.point1.position, this.point2.position ]);
+                }
+            }
+
+            let convertVec3 = (inpt, oupt) => {
+                oupt.position.x = inpt[0] * -1;
+                oupt.position.y = inpt[1] + floorOffset * 0.1;
+                oupt.position.z = inpt[2];
+            }
+
+            new Line(leftFoot, leftKnee);
+            new Line(leftKnee, leftHip);
+            new Line(leftHip, waist);
+
+            new Line(rightFoot, rightKnee);
+            new Line(rightKnee, rightHip);
+            new Line(rightHip, waist);
+
+            new Line(waist, spine);
+            new Line(spine, shoulderCenter);
+            new Line(shoulderCenter, head);
+
+            new Line(shoulderCenter, leftShoulder);
+            new Line(leftShoulder, leftElbow);
+            new Line(leftElbow, leftHand);
+
+            new Line(shoulderCenter, rightShoulder);
+            new Line(rightShoulder, rightElbow);
+            new Line(rightElbow, rightHand);
+
+            let render = () => {
+                requestAnimationFrame(render);
+                renderer.render(scene, camera);
+
+                convertVec3(body.leftFoot, leftFoot);
+                convertVec3(body.rightFoot, rightFoot);
+                convertVec3(body.waist, waist);
+                convertVec3(body.leftKnee, leftKnee);
+                convertVec3(body.rightKnee, rightKnee);
+                convertVec3(body.leftElbow, leftElbow);
+                convertVec3(body.rightElbow, rightElbow);
+                convertVec3(body.leftHand, leftHand);
+                convertVec3(body.rightHand, rightHand);
+                convertVec3(body.head, head);
+                convertVec3(body.leftHip, leftHip);
+                convertVec3(body.rightHip, rightHip);
+                convertVec3(body.shoulderCenter, shoulderCenter);
+                convertVec3(body.leftShoulder, leftShoulder);
+                convertVec3(body.rightShoulder, rightShoulder);
+                convertVec3(body.spine, spine);
+
+                lines.forEach(l => l.update());
+            }
+
+            render();
+        </script>
+    </body>
+</html>
